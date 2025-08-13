@@ -16,9 +16,9 @@ const Header = () => {
         <h1 className="text-2xl font-bold">Mindstamps</h1>
         
         <nav className="flex items-center space-x-6">
-          <a href="/" className="hover:text-blue-200">Home</a>
-          <a href="/create" className="hover:text-blue-200">Create Memory</a>
-          <a href="/play" className="hover:text-blue-200">Play</a>
+          <a href="#home" className="hover:text-blue-200">Home</a>
+          <a href="#journal" className="hover:text-blue-200">Journal</a>
+          <a href="#play" className="hover:text-blue-200">Play</a>
           
           {user ? (
             <div className="flex items-center space-x-4">
