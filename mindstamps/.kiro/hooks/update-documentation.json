@@ -1,0 +1,10 @@
+{
+  "name": "Update Documentation",
+  "description": "Automatically update README when significant features are added",
+  "trigger": {
+    "type": "manual",
+    "button_text": "📝 Update Docs"
+  },
+  "prompt": "Please review the current state of the Mindstamps application and update the README.md file to include:\n\n1. **Project Overview**: Clear description of what Mindstamps does\n2. **Features**: List of key features (memory creation, journal view, location guessing game)\n3. **Technology Stack**: React, Firebase, Leaflet, Tailwind CSS, etc.\n4. **Setup Instructions**: How to install and run the project locally\n5. **Firebase Configuration**: Steps to set up Firebase authentication and Firestore\n6. **Environment Variables**: Required environment variables and setup\n7. **Design System**: Brief overview of the cozy, journal-like aesthetic\n8. **Game Features**: Explanation of the memory guessing game mechanics\n9. **Screenshots**: Suggest locations for screenshots of key features\n10. **Contributing**: Guidelines for contributing to the project\n\nMake the documentation welcoming and comprehensive for new developers.",
+  "enabled": true
+}

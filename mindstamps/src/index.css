@@ -1,16 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --warm-cream: #faf7f2;
+  --soft-beige: #f5f1ea;
+  --warm-brown: #8b7355;
+  --deep-brown: #5d4e37;
+  --sage-green: #9caf88;
+  --dusty-rose: #d4a574;
+  --paper-white: #fefcf8;
+  --ink-black: #2c2416;
+  --shadow-warm: rgba(139, 115, 85, 0.15);
+}
+
 body {
   margin: 0;
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: linear-gradient(135deg, var(--warm-cream) 0%, var(--soft-beige) 100%);
+  color: var(--ink-black);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* Typography */
+.font-journal {
+  font-family: 'Crimson Text', serif;
 }
 
 /* Custom utilities */
@@ -19,4 +41,105 @@ body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Paper texture effect */
+.paper-texture {
+  background: var(--paper-white);
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(139, 115, 85, 0.05) 1px, transparent 0);
+  background-size: 20px 20px;
+  box-shadow: 
+    0 4px 6px var(--shadow-warm),
+    0 1px 3px rgba(139, 115, 85, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Journal page flip animation */
+.journal-page {
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease-in-out;
+}
+
+.journal-page.flipping {
+  transform: rotateY(-180deg);
+}
+
+/* Cozy shadows */
+.cozy-shadow {
+  box-shadow: 
+    0 10px 25px var(--shadow-warm),
+    0 6px 12px rgba(139, 115, 85, 0.1);
+}
+
+/* Warm button styles */
+.btn-warm {
+  background: linear-gradient(135deg, var(--dusty-rose) 0%, var(--warm-brown) 100%);
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
+}
+
+.btn-warm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 165, 116, 0.4);
+}
+
+.btn-sage {
+  background: linear-gradient(135deg, var(--sage-green) 0%, #7a8a6b 100%);
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(156, 175, 136, 0.3);
+}
+
+.btn-sage:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(156, 175, 136, 0.4);
+}
+
+/* Vintage input styles */
+.vintage-input {
+  background: var(--paper-white);
+  border: 2px solid var(--soft-beige);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: 'Inter', sans-serif;
+  color: var(--ink-black);
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(139, 115, 85, 0.1);
+}
+
+.vintage-input:focus {
+  outline: none;
+  border-color: var(--dusty-rose);
+  box-shadow: 
+    inset 0 2px 4px rgba(139, 115, 85, 0.1),
+    0 0 0 3px rgba(212, 165, 116, 0.2);
+}
+
+/* Cozy container */
+.cozy-container {
+  max-width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Side by side layout */
+.side-by-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex: 1;
+  gap: 0;
+  min-height: 0;
+}
+
+@media (max-width: 768px) {
+  .side-by-side {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
 }

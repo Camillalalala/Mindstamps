@@ -47,9 +47,9 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="cozy-container">
       {user && <Header />}
-      <main>
+      <main className="flex-1 min-h-0 overflow-hidden">
         {renderPage()}
       </main>
     </div>
