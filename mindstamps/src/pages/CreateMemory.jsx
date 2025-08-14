@@ -89,13 +89,6 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
 
       setCreatedMemoryTitle(title.trim());
       setSuccess(true);
-      
-      // Call onSuccess callback if provided (for Journal integration)
-      if (onSuccess) {
-        setTimeout(() => {
-          onSuccess();
-        }, 2000);
-      }
     } catch (error) {
       console.error('Detailed error creating memory:', error);
       alert(`Error creating memory: ${error.message}`);
@@ -128,7 +121,10 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
   if (!user) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold mb-4">Please sign in to create memories</h1>
+        <h1 className="text-2xl font-bold mb-4">You'll need to sign in first</h1>
+        <p className="text-base" style={{ color: 'var(--warm-brown)' }}>
+          This is your personal space for memories
+        </p>
       </div>
     );
   }
@@ -136,133 +132,172 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
   // Show success screen
   if (success) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="text-center">
-          <div className="mb-8">
-            <div className="text-6xl mb-4">🎉</div>
-            <h1 className="text-4xl font-bold text-green-600 mb-2">Success!</h1>
-            <p className="text-xl text-gray-600">Your memory has been created</p>
+      <div className="side-by-side h-full">
+          {/* Left Side - Success Message */}
+          <div className="flex flex-col justify-center items-center p-12 relative overflow-hidden">
+            <div className="text-center z-10">
+              <h1 className="text-4xl font-journal font-semibold mb-4" style={{ color: 'var(--deep-brown)' }}>
+                Nice work
+              </h1>
+              <p className="text-lg mb-8" style={{ color: 'var(--warm-brown)' }}>
+                Your memory is now part of your collection
+              </p>
+              
+              <div className="paper-texture cozy-shadow rounded-2xl p-6 mb-8">
+                <h2 className="text-2xl font-journal font-semibold mb-2" style={{ color: 'var(--deep-brown)' }}>
+                  "{createdMemoryTitle}"
+                </h2>
+                <p className="text-sm" style={{ color: 'var(--warm-brown)' }}>
+                  Saved to your journal
+                </p>
+              </div>
+            </div>
           </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">"{createdMemoryTitle}"</h2>
-            <p className="text-gray-600">Memory saved successfully to your collection!</p>
-          </div>
-          
-          <div className="space-y-4">
-            <button
-              onClick={createAnotherMemory}
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 font-semibold text-lg"
-            >
-              Create Another Memory
-            </button>
-            
-            <button
-              onClick={goToPlay}
-              className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 font-semibold text-lg"
-            >
-              Play Memory Game
-            </button>
-            
-            <button
-              onClick={handleBackToJournal}
-              className="w-full bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700 font-semibold text-lg"
-            >
-              Back to Journal
-            </button>
+
+          {/* Right Side - Action Buttons */}
+          <div className="flex flex-col justify-center items-center p-12" style={{ background: 'linear-gradient(135deg, var(--soft-beige) 0%, var(--warm-cream) 100%)' }}>
+            <div className="w-full max-w-sm space-y-4">
+              <button
+                onClick={createAnotherMemory}
+                className="btn-warm w-full py-4 rounded-full font-medium text-lg"
+              >
+                Write another one
+              </button>
+              
+              <button
+                onClick={goToPlay}
+                className="btn-sage w-full py-4 rounded-full font-medium text-lg"
+              >
+                Try the guessing game
+              </button>
+              
+              <button
+                onClick={handleBackToJournal}
+                className="w-full py-4 rounded-full font-medium text-lg transition-all duration-300"
+                style={{ 
+                  background: 'var(--paper-white)',
+                  color: 'var(--warm-brown)',
+                  border: '2px solid var(--soft-beige)'
+                }}
+              >
+                Back to your journal
+              </button>
+            </div>
           </div>
         </div>
-      </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <div className="flex items-center mb-8">
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="paper-texture border-b border-opacity-20 px-8 py-4 flex items-center flex-shrink-0" style={{ borderColor: 'var(--warm-brown)' }}>
         {onBack && (
           <button
             onClick={onBack}
-            className="mr-4 text-gray-600 hover:text-gray-800 flex items-center"
+            className="mr-4 flex items-center space-x-2 px-3 py-2 rounded-full transition-all duration-300 hover:bg-gradient-to-r hover:from-orange-100 hover:to-yellow-100"
+            style={{ color: 'var(--warm-brown)' }}
           >
-            <span className="mr-1">←</span> Back to Journal
+            <span>←</span>
+            <span>Back to your journal</span>
           </button>
         )}
-        <h1 className="text-3xl font-bold flex-1 text-center">Create New Memory</h1>
+        <h1 className="text-2xl font-journal font-semibold flex-1 text-center" style={{ color: 'var(--deep-brown)' }}>
+          Write a new memory
+        </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Title */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Memory Title
-          </label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g., Amazing sunset in Paris"
-            required
-          />
-        </div>
-
-        {/* Story */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Your Story
-          </label>
-          <textarea
-            value={story}
-            onChange={(e) => setStory(e.target.value)}
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Tell the story behind this memory..."
-            required
-          />
-        </div>
-
-        {/* Image Upload */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Upload Photo (Optional)
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {imagePreview && (
-            <div className="mt-4">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="max-w-full h-48 object-cover rounded-md"
+      <div className="side-by-side">
+        {/* Left Side - Form */}
+        <div className="paper-texture p-8 overflow-y-auto border-r border-opacity-20" style={{ borderColor: 'var(--warm-brown)' }}>
+          <form onSubmit={handleSubmit} className="space-y-6 max-w-md mx-auto">
+            {/* Title */}
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--deep-brown)' }}>
+                What should we call this memory?
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="vintage-input w-full"
+                placeholder="Something like 'That amazing sunset in Paris'"
+                required
               />
             </div>
+
+            {/* Story */}
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--deep-brown)' }}>
+                Tell me what happened
+              </label>
+              <textarea
+                value={story}
+                onChange={(e) => setStory(e.target.value)}
+                rows={4}
+                className="vintage-input w-full resize-none"
+                placeholder="Write about what made this moment special..."
+                required
+              />
+            </div>
+
+            {/* Image Upload */}
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--deep-brown)' }}>
+                Got a photo? (totally optional)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="vintage-input w-full"
+              />
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-warm w-full py-3 rounded-full font-medium text-lg disabled:opacity-50"
+            >
+              {loading ? 'Saving this memory...' : 'Save this memory'}
+            </button>
+          </form>
+        </div>
+
+        {/* Right Side - Map and Preview */}
+        <div className="flex flex-col pb-8" style={{ background: 'linear-gradient(135deg, var(--soft-beige) 0%, var(--warm-cream) 100%)' }}>
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="p-6 border-b border-opacity-20" style={{ borderColor: 'var(--warm-brown)' }}>
+              <h3 className="text-lg font-journal font-semibold mb-3" style={{ color: 'var(--deep-brown)' }}>
+                Your photo
+              </h3>
+              <div className="paper-texture cozy-shadow rounded-lg overflow-hidden">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full h-32 object-cover"
+                  style={{ filter: 'sepia(10%) saturate(90%)' }}
+                />
+              </div>
+            </div>
           )}
-        </div>
 
-        {/* Location */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Location
-          </label>
-          <LocationPicker 
-            onLocationSelect={handleLocationSelect}
-            initialLocation={location.lat ? location : null}
-          />
+          {/* Location Picker */}
+          <div className="flex-1 p-6">
+            <h3 className="text-lg font-journal font-semibold mb-3" style={{ color: 'var(--deep-brown)' }}>
+              Where did this happen?
+            </h3>
+            <div className="h-full max-h-80">
+              <LocationPicker 
+                onLocationSelect={handleLocationSelect}
+                initialLocation={location.lat ? location : null}
+              />
+            </div>
+          </div>
         </div>
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-        >
-          {loading ? 'Creating Memory...' : 'Create Memory'}
-        </button>
-      </form>
+      </div>
     </div>
   );
 };

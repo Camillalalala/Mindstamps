@@ -144,7 +144,7 @@ const LocationPicker = ({ onLocationSelect, initialLocation = null }) => {
         </button>
       </div>
       
-      <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-300">
+      <div className="h-80 w-full rounded-lg overflow-hidden border border-gray-300">
         <MapContainer
           center={position || [40.7128, -74.0060]} // Default to NYC
           zoom={position ? 13 : 2}

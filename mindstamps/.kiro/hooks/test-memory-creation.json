@@ -1,0 +1,10 @@
+{
+  "name": "Test Memory Creation Flow",
+  "description": "Automatically test the memory creation workflow when CreateMemory component is modified",
+  "trigger": {
+    "type": "file_change",
+    "pattern": "**/CreateMemory.jsx"
+  },
+  "prompt": "The CreateMemory component has been modified. Please:\n\n1. Review the changes to ensure they follow the Mindstamps design system\n2. Check that the form validation is working properly\n3. Verify that the success flow provides clear user feedback\n4. Test that the Firebase integration is functioning correctly\n5. Ensure the cozy, journal-like aesthetic is maintained\n6. Confirm that all content fits within the viewport without scrolling\n\nIf any issues are found, provide specific recommendations for fixes.",
+  "enabled": true
+}

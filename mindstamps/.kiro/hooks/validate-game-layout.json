@@ -1,0 +1,10 @@
+{
+  "name": "Validate Game Layout",
+  "description": "Check game layout and user experience when Play component is updated",
+  "trigger": {
+    "type": "file_change",
+    "pattern": "**/Play.jsx"
+  },
+  "prompt": "The Play component has been updated. Please validate:\n\n1. **Layout Containment**: Ensure all game elements fit within the viewport without scrolling\n2. **Map Boundaries**: Verify the map stays within its 400px height container with proper margins\n3. **Button Accessibility**: Confirm submit and action buttons are always visible and clickable\n4. **Memory Display**: Check that memory content uses 80% of left panel width effectively\n5. **Game Flow**: Test the progression from guess to result to next memory\n6. **Visual Feedback**: Ensure users get clear feedback for their actions (guess markers, score display)\n7. **Responsive Design**: Verify the layout works on different screen sizes\n8. **Cozy Aesthetic**: Confirm the warm, journal-like design is maintained\n\nReport any layout issues or user experience problems found.",
+  "enabled": true
+}

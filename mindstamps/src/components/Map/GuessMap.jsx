@@ -73,91 +73,59 @@ const GuessMap = ({
   }, [showResult, guessPosition, actualPosition]);
 
   return (
-    <div className="space-y-4">
-      <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-300">
-        <MapContainer
-          center={[20, 0]} // Center on world view
-          zoom={2}
-          style={{ height: '100%', width: '100%' }}
-          ref={mapRef}
-          whenReady={() => {
-            setTimeout(() => {
-              if (mapRef.current) {
-                mapRef.current.invalidateSize();
-              }
-            }, 100);
-          }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            maxZoom={20}
-            subdomains="abcd"
+    <div className="w-full rounded-lg overflow-hidden border border-gray-300" style={{ height: '400px' }}>
+      <MapContainer
+        center={[20, 0]} // Center on world view
+        zoom={2}
+        style={{ height: '400px', width: '100%' }}
+        ref={mapRef}
+        whenReady={() => {
+          setTimeout(() => {
+            if (mapRef.current) {
+              mapRef.current.invalidateSize();
+            }
+          }, 100);
+        }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          maxZoom={20}
+          subdomains="abcd"
+        />
+        
+        <GuessMarker onGuess={onGuess} disabled={disabled} />
+        
+        {/* Show guess marker */}
+        {guessPosition && (
+          <Marker 
+            position={[guessPosition.lat, guessPosition.lng]} 
+            icon={guessIcon}
           />
-          
-          <GuessMarker onGuess={onGuess} disabled={disabled} />
-          
-          {/* Show guess marker */}
-          {guessPosition && (
-            <Marker 
-              position={[guessPosition.lat, guessPosition.lng]} 
-              icon={guessIcon}
-            />
-          )}
-          
-          {/* Show actual location when revealing result */}
-          {showResult && actualPosition && (
-            <Marker 
-              position={[actualPosition.lat, actualPosition.lng]} 
-              icon={actualIcon}
-            />
-          )}
-          
-          {/* Draw line between guess and actual location */}
-          {showResult && guessPosition && actualPosition && (
-            <Polyline
-              positions={[
-                [guessPosition.lat, guessPosition.lng],
-                [actualPosition.lat, actualPosition.lng]
-              ]}
-              color="red"
-              weight={3}
-              opacity={0.7}
-              dashArray="5, 10"
-            />
-          )}
-        </MapContainer>
-      </div>
-      
-      <div className="text-sm text-gray-600 space-y-1">
-        {!disabled && !guessPosition && (
-          <div>💡 Click anywhere on the map to make your guess</div>
         )}
-        {guessPosition && !showResult && (
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <div className="font-medium text-blue-800">Your Guess:</div>
-            <div className="text-blue-600">
-              {guessPosition.lat.toFixed(4)}, {guessPosition.lng.toFixed(4)}
-            </div>
-          </div>
+        
+        {/* Show actual location when revealing result */}
+        {showResult && actualPosition && (
+          <Marker 
+            position={[actualPosition.lat, actualPosition.lng]} 
+            icon={actualIcon}
+          />
         )}
-        {showResult && (
-          <div className="space-y-2">
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="font-medium text-blue-800">🔵 Your Guess:</div>
-              <div className="text-blue-600">
-                {guessPosition.lat.toFixed(4)}, {guessPosition.lng.toFixed(4)}
-              </div>
-            </div>
-            <div className="bg-red-50 p-3 rounded-lg">
-              <div className="font-medium text-red-800">🔴 Actual Location:</div>
-              <div className="text-red-600">
-                {actualPosition.lat.toFixed(4)}, {actualPosition.lng.toFixed(4)}
-              </div>
-            </div>
-          </div>
+        
+        {/* Draw line between guess and actual location */}
+        {showResult && guessPosition && actualPosition && (
+          <Polyline
+            positions={[
+              [guessPosition.lat, guessPosition.lng],
+              [actualPosition.lat, actualPosition.lng]
+            ]}
+            color="red"
+            weight={3}
+            opacity={0.7}
+            dashArray="5, 10"
+          />
         )}
-      </div>
+      </MapContainer>
     </div>
   );
 };
