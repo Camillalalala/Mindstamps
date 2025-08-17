@@ -128,18 +128,116 @@ body {
   flex-direction: column;
 }
 
-/* Side by side layout */
+/* Side by side layout with book spine */
 .side-by-side {
   display: grid;
   grid-template-columns: 1fr 1fr;
   flex: 1;
   gap: 0;
   min-height: 0;
+  position: relative;
+}
+
+/* Book spine effect */
+.side-by-side::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: linear-gradient(
+    to right,
+    rgba(139, 115, 85, 0.3) 0%,
+    rgba(93, 78, 55, 0.6) 20%,
+    rgba(93, 78, 55, 0.8) 50%,
+    rgba(93, 78, 55, 0.6) 80%,
+    rgba(139, 115, 85, 0.3) 100%
+  );
+  box-shadow: 
+    inset 2px 0 4px rgba(93, 78, 55, 0.4),
+    inset -2px 0 4px rgba(93, 78, 55, 0.4),
+    0 0 8px rgba(93, 78, 55, 0.2);
+}
+
+/* Book spine binding details */
+.side-by-side::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  bottom: 10%;
+  width: 2px;
+  transform: translateX(-50%);
+  z-index: 11;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(93, 78, 55, 0.8) 10%,
+    rgba(93, 78, 55, 0.9) 50%,
+    rgba(93, 78, 55, 0.8) 90%,
+    transparent 100%
+  );
+  border-radius: 1px;
+}
+
+/* Add subtle page curve effect */
+.side-by-side > *:first-child {
+  position: relative;
+}
+
+.side-by-side > *:first-child::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(
+    to left,
+    rgba(139, 115, 85, 0.1) 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+.side-by-side > *:last-child {
+  position: relative;
+}
+
+.side-by-side > *:last-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(
+    to right,
+    rgba(139, 115, 85, 0.1) 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 5;
 }
 
 @media (max-width: 768px) {
   .side-by-side {
     grid-template-columns: 1fr;
     overflow-y: auto;
+  }
+  
+  /* Hide spine on mobile */
+  .side-by-side::before,
+  .side-by-side::after {
+    display: none;
+  }
+  
+  .side-by-side > *:first-child::after,
+  .side-by-side > *:last-child::before {
+    display: none;
   }
 }
