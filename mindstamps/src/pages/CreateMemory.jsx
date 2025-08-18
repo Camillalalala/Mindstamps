@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { collection, addDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import LocationPicker from '../components/Map/LocationPicker';
+import VoiceRecorder from '../components/VoiceRecorder';
 
 const CreateMemory = ({ onBack = null, onSuccess = null }) => {
   const [user] = useAuthState(auth);
@@ -14,6 +15,10 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [createdMemoryTitle, setCreatedMemoryTitle] = useState('');
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [currentVoiceField, setCurrentVoiceField] = useState('title');
+  const fieldChangeTimeoutRef = useRef(null);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -27,6 +32,133 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
 
   const handleLocationSelect = (selectedLocation) => {
     setLocation(selectedLocation);
+  };
+
+  const handleVoiceTranscription = (transcript, isFinal, field) => {
+    console.log('Voice transcription:', { transcript, isFinal, field, currentVoiceField });
+    setVoiceTranscript(transcript);
+    
+    if (isFinal && transcript.trim()) {
+      // Clean transcript (remove navigation and command words)
+      const cleanTranscript = transcript
+        .replace(/\b(next field|next|move on|submit|save memory|create memory|address is|location is|at)\b/gi, '')
+        .trim();
+      
+      console.log('Clean transcript:', cleanTranscript, 'for field:', field);
+      
+      if (cleanTranscript) {
+        // Auto-populate the appropriate field
+        if (field === 'title') {
+          console.log('Adding to title:', cleanTranscript);
+          setTitle(prev => prev + (prev ? ' ' : '') + cleanTranscript);
+        } else if (field === 'story') {
+          console.log('Adding to story:', cleanTranscript);
+          setStory(prev => prev + (prev ? ' ' : '') + cleanTranscript);
+        } else if (field === 'location') {
+          console.log('Adding to location:', cleanTranscript);
+          // For location, we'll use it to search/set the location
+          handleVoiceLocation(cleanTranscript);
+        }
+      }
+      setVoiceTranscript('');
+    }
+  };
+
+  const handleVoiceLocation = async (locationText) => {
+    // Set location name and try to geocode it
+    setLocation(prev => ({
+      ...prev,
+      name: locationText
+    }));
+    
+    // Try to geocode the location (basic implementation)
+    try {
+      // This is a simple approach - in production you'd use a proper geocoding service
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationText)}`);
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        setLocation({
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon),
+          name: locationText
+        });
+      }
+    } catch (error) {
+      console.log('Geocoding failed, using text only:', error);
+      // Keep the text-only location if geocoding fails
+    }
+  };
+
+  const handleVoiceFieldChange = (newField) => {
+    console.log('Voice field changing from', currentVoiceField, 'to', newField);
+    
+    // Clear any existing timeout
+    if (fieldChangeTimeoutRef.current) {
+      clearTimeout(fieldChangeTimeoutRef.current);
+    }
+    
+    // Debounce field changes to prevent rapid toggling
+    fieldChangeTimeoutRef.current = setTimeout(() => {
+      setCurrentVoiceField(newField);
+      
+      // Provide audio feedback
+      if ('speechSynthesis' in window) {
+        const fieldNames = {
+          title: 'memory title',
+          story: 'story',
+          location: 'location'
+        };
+        const utterance = new SpeechSynthesisUtterance(`Now recording ${fieldNames[newField] || newField}`);
+        utterance.volume = 0.5;
+        utterance.rate = 1.2;
+        speechSynthesis.speak(utterance);
+      }
+    }, 200);
+  };
+
+  const handleVoiceSubmit = () => {
+    // Trigger form submission via voice
+    if (title.trim() && story.trim()) {
+      const form = document.querySelector('form');
+      if (form) {
+        form.requestSubmit();
+      }
+    } else {
+      // Provide audio feedback about missing fields
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance('Please provide both a title and story before submitting');
+        utterance.volume = 0.7;
+        speechSynthesis.speak(utterance);
+      }
+    }
+  };
+
+  const handleVoiceError = (error) => {
+    alert(`Voice recording error: ${error}`);
+  };
+
+  const toggleVoiceMode = () => {
+    const newVoiceMode = !isVoiceMode;
+    setIsVoiceMode(newVoiceMode);
+    
+    if (newVoiceMode) {
+      // Reset to first field when enabling voice mode
+      setCurrentVoiceField('title');
+      console.log('Voice mode enabled, starting with title field');
+      
+      // Provide audio instructions
+      if ('speechSynthesis' in window) {
+        setTimeout(() => {
+          const utterance = new SpeechSynthesisUtterance('Voice mode activated. Start with your memory title, then say next to move between fields, or submit to save your memory.');
+          utterance.volume = 0.6;
+          utterance.rate = 1.1;
+          speechSynthesis.speak(utterance);
+        }, 1000);
+      }
+    } else {
+      console.log('Voice mode disabled');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -191,20 +323,36 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="paper-texture border-b border-opacity-20 px-8 py-4 flex items-center flex-shrink-0" style={{ borderColor: 'var(--warm-brown)' }}>
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="mr-4 flex items-center space-x-2 px-3 py-2 rounded-full transition-all duration-300 hover:bg-gradient-to-r hover:from-orange-100 hover:to-yellow-100"
-            style={{ color: 'var(--warm-brown)' }}
-          >
-            <span>←</span>
-            <span>Back to your journal</span>
-          </button>
-        )}
-        <h1 className="text-2xl font-journal font-semibold flex-1 text-center" style={{ color: 'var(--deep-brown)' }}>
-          Write a new memory
-        </h1>
+      <div className="paper-texture border-b border-opacity-20 px-4 sm:px-8 py-4 flex items-center justify-between flex-shrink-0" style={{ borderColor: 'var(--warm-brown)' }}>
+        <div className="flex items-center flex-1">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="mr-4 flex items-center space-x-2 px-3 py-2 rounded-full transition-all duration-300 hover:bg-gradient-to-r hover:from-orange-100 hover:to-yellow-100"
+              style={{ color: 'var(--warm-brown)' }}
+            >
+              <span>←</span>
+              <span className="hidden sm:inline">Back to your journal</span>
+              <span className="sm:hidden">Back</span>
+            </button>
+          )}
+          <h1 className="text-xl sm:text-2xl font-journal font-semibold" style={{ color: 'var(--deep-brown)' }}>
+            Write a new memory
+          </h1>
+        </div>
+        
+        {/* Voice Mode Toggle */}
+        <button
+          onClick={toggleVoiceMode}
+          className={`px-3 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center space-x-2 whitespace-nowrap ${
+            isVoiceMode 
+              ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' 
+              : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 hover:from-gray-200 hover:to-gray-300'
+          }`}
+        >
+          <span>🎤</span>
+          <span>{isVoiceMode ? 'Voice On' : 'Voice Off'}</span>
+        </button>
       </div>
 
       <div className="side-by-side">
@@ -212,34 +360,90 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
         <div className="paper-texture p-8 overflow-y-auto border-r border-opacity-20" style={{ borderColor: 'var(--warm-brown)' }}>
           <form onSubmit={handleSubmit} className="space-y-6 max-w-md mx-auto">
             {/* Title */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--deep-brown)' }}>
+            <div className={`${isVoiceMode && currentVoiceField === 'title' ? 'ring-2 ring-purple-300 rounded-lg p-2' : ''}`}>
+              <label className="block text-sm font-medium mb-2 flex items-center" style={{ color: 'var(--deep-brown)' }}>
                 What should we call this memory?
+                {isVoiceMode && currentVoiceField === 'title' && (
+                  <span className="ml-2 px-2 py-1 bg-purple-500 text-white text-xs rounded-full animate-pulse">
+                    🎤 Active
+                  </span>
+                )}
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="vintage-input w-full"
-                placeholder="Something like 'That amazing sunset in Paris'"
+                placeholder={isVoiceMode ? "Speak your memory title or type here..." : "Something like 'That amazing sunset in Paris'"}
                 required
               />
             </div>
 
             {/* Story */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--deep-brown)' }}>
+            <div className={`${isVoiceMode && currentVoiceField === 'story' ? 'ring-2 ring-purple-300 rounded-lg p-2' : ''}`}>
+              <label className="block text-sm font-medium mb-2 flex items-center" style={{ color: 'var(--deep-brown)' }}>
                 Tell me what happened
+                {isVoiceMode && currentVoiceField === 'story' && (
+                  <span className="ml-2 px-2 py-1 bg-purple-500 text-white text-xs rounded-full animate-pulse">
+                    🎤 Active
+                  </span>
+                )}
               </label>
+              
+              {/* Voice Recorder */}
+              {isVoiceMode && (
+                <div className="mb-4 p-4 rounded-lg border-2 border-dashed" style={{ 
+                  background: 'var(--soft-beige)',
+                  borderColor: currentVoiceField === 'story' ? 'var(--dusty-rose)' : 'var(--warm-brown)'
+                }}>
+                  <VoiceRecorder 
+                    key={`voice-${isVoiceMode}`}
+                    onTranscription={handleVoiceTranscription}
+                    onError={handleVoiceError}
+                    onFieldChange={handleVoiceFieldChange}
+                    onSubmit={handleVoiceSubmit}
+                    currentField={currentVoiceField}
+                    autoStart={true}
+                  />
+                </div>
+              )}
+              
               <textarea
                 value={story}
                 onChange={(e) => setStory(e.target.value)}
-                rows={4}
+                rows={isVoiceMode ? 6 : 4}
                 className="vintage-input w-full resize-none"
-                placeholder="Write about what made this moment special..."
+                placeholder={isVoiceMode ? "Your voice recording will appear here, or type manually..." : "Write about what made this moment special..."}
                 required
               />
+              
+              {voiceTranscript && (
+                <div className="mt-2 p-2 rounded text-sm italic" style={{ background: 'var(--warm-cream)', color: 'var(--warm-brown)' }}>
+                  Currently speaking: "{voiceTranscript}"
+                </div>
+              )}
             </div>
+
+            {/* Location Display */}
+            {isVoiceMode && (
+              <div className={`${currentVoiceField === 'location' ? 'ring-2 ring-purple-300 rounded-lg p-2' : ''}`}>
+                <label className="block text-sm font-medium mb-2 flex items-center" style={{ color: 'var(--deep-brown)' }}>
+                  Location
+                  {currentVoiceField === 'location' && (
+                    <span className="ml-2 px-2 py-1 bg-purple-500 text-white text-xs rounded-full animate-pulse">
+                      🎤 Active
+                    </span>
+                  )}
+                </label>
+                <div className="vintage-input w-full bg-gray-50" style={{ minHeight: '40px', display: 'flex', alignItems: 'center' }}>
+                  {location.name ? (
+                    <span style={{ color: 'var(--deep-brown)' }}>{location.name}</span>
+                  ) : (
+                    <span style={{ color: 'var(--warm-brown)' }}>Say "address is [your location]" to set location</span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Image Upload */}
             <div>

@@ -3,6 +3,9 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { collection, query, where, getDocs, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import CreateMemory from './CreateMemory';
+import { replaceSampleMemories } from '../utils/sampleData';
+import MobileNavigation from '../components/MobileNavigation';
+import useSwipeGesture from '../hooks/useSwipeGesture';
 
 const MemoryPage = ({ memory, isLeft = true, onEdit, onSave, onCancelEdit, isEditing = false }) => {
   const [editTitle, setEditTitle] = useState(memory.title);
@@ -285,6 +288,12 @@ const Journal = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [editingMemoryId, setEditingMemoryId] = useState(null);
 
+  // Swipe gesture handlers
+  const swipeHandlers = useSwipeGesture(
+    () => nextPage(), // Swipe left = next page
+    () => prevPage()  // Swipe right = previous page
+  );
+
   useEffect(() => {
     if (user) {
       loadMemories();
@@ -492,6 +501,36 @@ const Journal = () => {
     }
   };
 
+  const handleLoadSampleData = async () => {
+    if (!user) return;
+    
+    const confirmed = window.confirm(
+      'This will replace all your current memories with sample family-friendly stories. Are you sure you want to continue?'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      setLoading(true);
+      const result = await replaceSampleMemories(user.uid);
+      console.log('Sample data loaded:', result);
+      
+      // Reload memories to show the new sample data
+      await loadMemories();
+      
+      // Reset to first page
+      setCurrentPage(0);
+      setEditingMemoryId(null);
+      
+      alert(`Successfully replaced ${result.deleted} memories with ${result.added} sample stories!`);
+    } catch (error) {
+      console.error('Error loading sample data:', error);
+      alert('Failed to load sample data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -550,7 +589,7 @@ const Journal = () => {
         </div>
 
         {/* Empty Journal Pages */}
-        <div className="side-by-side">
+        <div className="side-by-side spiral-holes">
           {/* Left page - Empty journal */}
           <div className="paper-texture flex flex-col justify-center items-center p-12 border-r border-opacity-20" style={{ borderColor: 'var(--warm-brown)' }}>
             <div className="text-center">
@@ -599,26 +638,31 @@ const Journal = () => {
   return (
     <div className="h-full flex flex-col">
       {/* Journal Header */}
-      <div className="paper-texture border-b border-opacity-20 px-8 py-4 flex justify-between items-center flex-shrink-0" style={{ borderColor: 'var(--warm-brown)' }}>
-        <div>
-          <h1 className="text-2xl font-journal font-semibold" style={{ color: 'var(--deep-brown)' }}>
+      <div className="paper-texture border-b border-opacity-20 px-4 sm:px-8 py-4 flex justify-between items-center flex-shrink-0 mobile-header" style={{ borderColor: 'var(--warm-brown)' }}>
+        <div className="flex-1">
+          <h1 className="text-xl sm:text-2xl font-journal font-semibold" style={{ color: 'var(--deep-brown)' }}>
             Your journal
           </h1>
-          <p className="text-sm" style={{ color: 'var(--warm-brown)' }}>
+          <p className="text-xs sm:text-sm" style={{ color: 'var(--warm-brown)' }}>
             {memories.length} {memories.length === 1 ? 'memory' : 'memories'} • Page {currentPage + 1} of {totalPages}
           </p>
         </div>
         
-        <button
-          onClick={() => setView('create')}
-          className="btn-warm px-6 py-2 rounded-full font-medium"
-        >
-          Add another
-        </button>
+        <div className="mobile-buttons">
+          <button
+            onClick={() => setView('create')}
+            className="btn-warm px-4 sm:px-6 py-2 rounded-full font-medium text-sm sm:text-base whitespace-nowrap"
+          >
+            Add Memory
+          </button>
+        </div>
       </div>
 
       {/* Journal Pages */}
-      <div className={`side-by-side flex-1 ${editingMemoryId ? 'editing-mode' : ''}`}>
+      <div 
+        className={`side-by-side spiral-holes flex-1 ${editingMemoryId ? 'editing-mode' : ''}`}
+        {...swipeHandlers}
+      >
         {/* Left Page */}
         <div className="relative">
           {leftMemory ? (
@@ -682,14 +726,25 @@ const Journal = () => {
         </div>
       </div>
 
-      {/* Navigation Footer */}
-      <NavigationFooter
+      {/* Navigation Footer - Desktop */}
+      <div className="hidden md:block">
+        <NavigationFooter
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPrevPage={prevPage}
+          onNextPage={nextPage}
+          onPageSelect={setCurrentPage}
+          showKeyboardHint={true}
+        />
+      </div>
+
+      {/* Mobile Navigation */}
+      <MobileNavigation
         currentPage={currentPage}
         totalPages={totalPages}
         onPrevPage={prevPage}
         onNextPage={nextPage}
         onPageSelect={setCurrentPage}
-        showKeyboardHint={true}
       />
     </div>
   );

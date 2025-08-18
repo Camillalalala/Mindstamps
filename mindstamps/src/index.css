@@ -138,49 +138,74 @@ body {
   position: relative;
 }
 
-/* Book spine effect */
+/* Spiral binding spine background */
 .side-by-side::before {
   content: '';
   position: absolute;
   left: 50%;
   top: 0;
   bottom: 0;
-  width: 12px;
+  width: 24px;
   transform: translateX(-50%);
-  z-index: 10;
+  z-index: 9;
   background: linear-gradient(
     to right,
-    rgba(139, 115, 85, 0.3) 0%,
-    rgba(93, 78, 55, 0.6) 20%,
-    rgba(93, 78, 55, 0.8) 50%,
-    rgba(93, 78, 55, 0.6) 80%,
-    rgba(139, 115, 85, 0.3) 100%
+    rgba(139, 115, 85, 0.1) 0%,
+    rgba(93, 78, 55, 0.2) 25%,
+    rgba(93, 78, 55, 0.3) 50%,
+    rgba(93, 78, 55, 0.2) 75%,
+    rgba(139, 115, 85, 0.1) 100%
   );
-  box-shadow: 
-    inset 2px 0 4px rgba(93, 78, 55, 0.4),
-    inset -2px 0 4px rgba(93, 78, 55, 0.4),
-    0 0 8px rgba(93, 78, 55, 0.2);
 }
 
-/* Book spine binding details */
+/* Metal spiral coils */
 .side-by-side::after {
   content: '';
   position: absolute;
   left: 50%;
-  top: 10%;
-  bottom: 10%;
-  width: 2px;
+  top: 0;
+  bottom: 0;
+  width: 18px;
   transform: translateX(-50%);
   z-index: 11;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(93, 78, 55, 0.8) 10%,
-    rgba(93, 78, 55, 0.9) 50%,
-    rgba(93, 78, 55, 0.8) 90%,
-    transparent 100%
-  );
-  border-radius: 1px;
+  background: 
+    /* Left spiral curves */
+    repeating-linear-gradient(
+      45deg,
+      transparent 0px,
+      transparent 2px,
+      rgba(140, 140, 140, 0.9) 2px,
+      rgba(180, 180, 180, 1) 4px,
+      rgba(140, 140, 140, 0.9) 6px,
+      transparent 6px,
+      transparent 12px
+    ),
+    /* Right spiral curves */
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0px,
+      transparent 2px,
+      rgba(140, 140, 140, 0.9) 2px,
+      rgba(180, 180, 180, 1) 4px,
+      rgba(140, 140, 140, 0.9) 6px,
+      transparent 6px,
+      transparent 12px
+    ),
+    /* Center connecting wire */
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 5px,
+      rgba(160, 160, 160, 0.8) 5px,
+      rgba(200, 200, 200, 1) 7px,
+      rgba(160, 160, 160, 0.8) 9px,
+      transparent 9px,
+      transparent 15px
+    );
+  background-size: 9px 15px, 9px 15px, 2px 15px;
+  background-position: 0px 0px, 9px 0px, 8px 0px;
+  background-repeat: repeat-y;
+  border-radius: 2px;
 }
 
 /* Add subtle page curve effect */
@@ -224,6 +249,7 @@ body {
   z-index: 5;
 }
 
+/* Mobile responsiveness */
 @media (max-width: 768px) {
   .side-by-side {
     grid-template-columns: 1fr;
@@ -239,6 +265,65 @@ body {
   .side-by-side > *:first-child::after,
   .side-by-side > *:last-child::before {
     display: none;
+  }
+
+  /* Mobile-specific journal page styling */
+  .journal-page {
+    min-height: 100vh;
+    padding: 1rem !important;
+  }
+
+  /* Mobile navigation */
+  .mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--paper-white);
+    border-top: 1px solid var(--soft-beige);
+    padding: 1rem;
+    z-index: 100;
+    box-shadow: 0 -4px 12px rgba(139, 115, 85, 0.1);
+  }
+
+  /* Mobile header adjustments */
+  .mobile-header {
+    padding: 0.75rem 1rem !important;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .mobile-header h1 {
+    font-size: 1.5rem !important;
+  }
+
+  .mobile-header p {
+    font-size: 0.875rem !important;
+  }
+
+  /* Mobile button adjustments */
+  .mobile-buttons {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mobile-buttons button {
+    flex: 1;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .btn-warm, .btn-sage {
+    transform: none !important;
+  }
+  
+  .btn-warm:active, .btn-sage:active {
+    transform: scale(0.98);
   }
 }/* 
 Editing mode visual feedback */
@@ -288,4 +373,38 @@ Editing mode visual feedback */
 
 .editing-indicator {
   animation: editingPulse 1.5s ease-in-out infinite;
+}
+
+/* 3D Hemispheric punch holes */
+.side-by-side {
+  position: relative;
+}
+
+.side-by-side .spiral-holes::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  transform: translateX(-50%);
+  z-index: 12;
+  background-image: 
+    /* Create hemispheric holes with radial gradients */
+    repeating-radial-gradient(
+      ellipse 4px 3px at 50% 7.5px,
+      rgba(60, 50, 40, 0.9) 0%,
+      rgba(80, 70, 60, 0.7) 30%,
+      rgba(120, 110, 100, 0.4) 60%,
+      transparent 80%
+    ),
+    repeating-radial-gradient(
+      ellipse 4px 3px at 50% 22.5px,
+      rgba(60, 50, 40, 0.9) 0%,
+      rgba(80, 70, 60, 0.7) 30%,
+      rgba(120, 110, 100, 0.4) 60%,
+      transparent 80%
+    );
+  background-size: 8px 15px;
+  background-repeat: repeat-y;
 }
