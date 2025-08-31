@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { collection, addDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
@@ -18,7 +18,6 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [currentVoiceField, setCurrentVoiceField] = useState('title');
-  const fieldChangeTimeoutRef = useRef(null);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -92,29 +91,20 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
 
   const handleVoiceFieldChange = (newField) => {
     console.log('Voice field changing from', currentVoiceField, 'to', newField);
+    setCurrentVoiceField(newField);
     
-    // Clear any existing timeout
-    if (fieldChangeTimeoutRef.current) {
-      clearTimeout(fieldChangeTimeoutRef.current);
+    // Provide audio feedback
+    if ('speechSynthesis' in window) {
+      const fieldNames = {
+        title: 'memory title',
+        story: 'story',
+        location: 'location'
+      };
+      const utterance = new SpeechSynthesisUtterance(`Now recording ${fieldNames[newField] || newField}`);
+      utterance.volume = 0.5;
+      utterance.rate = 1.2;
+      speechSynthesis.speak(utterance);
     }
-    
-    // Debounce field changes to prevent rapid toggling
-    fieldChangeTimeoutRef.current = setTimeout(() => {
-      setCurrentVoiceField(newField);
-      
-      // Provide audio feedback
-      if ('speechSynthesis' in window) {
-        const fieldNames = {
-          title: 'memory title',
-          story: 'story',
-          location: 'location'
-        };
-        const utterance = new SpeechSynthesisUtterance(`Now recording ${fieldNames[newField] || newField}`);
-        utterance.volume = 0.5;
-        utterance.rate = 1.2;
-        speechSynthesis.speak(utterance);
-      }
-    }, 200);
   };
 
   const handleVoiceSubmit = () => {
@@ -397,7 +387,7 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
                   borderColor: currentVoiceField === 'story' ? 'var(--dusty-rose)' : 'var(--warm-brown)'
                 }}>
                   <VoiceRecorder 
-                    key={`voice-${isVoiceMode}`}
+                    key={`voice-${isVoiceMode}-${currentVoiceField}`}
                     onTranscription={handleVoiceTranscription}
                     onError={handleVoiceError}
                     onFieldChange={handleVoiceFieldChange}

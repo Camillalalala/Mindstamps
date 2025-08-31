@@ -51,9 +51,7 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
           // Navigation commands
           if (lowerTranscript.includes('next field') || lowerTranscript.includes('next') || lowerTranscript.includes('move on')) {
             console.log('Processing "next" command');
-            if (!isProcessingCommand) {
-              handleFieldNavigation();
-            }
+            handleFieldNavigation();
             // Clear transcript but don't return - let normal processing continue
             setTranscript('');
             return;
@@ -173,13 +171,6 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
   }, [currentField]);
 
   const handleFieldNavigation = () => {
-    if (isProcessingCommand) {
-      console.log('Already processing command, ignoring duplicate');
-      return;
-    }
-    
-    setIsProcessingCommand(true);
-    
     const fieldOrder = ['title', 'story', 'location'];
     const currentIndex = fieldOrder.indexOf(activeField);
     const nextIndex = (currentIndex + 1) % fieldOrder.length;
@@ -195,10 +186,7 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
       onFieldChange(nextField);
     }
     
-    // Reset command processing flag after a delay
-    setTimeout(() => {
-      setIsProcessingCommand(false);
-    }, 1000);
+    // No need to restart recognition - keep it running continuously
   };
 
   const handleLocationCommand = (transcript) => {
