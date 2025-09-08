@@ -1,0 +1,26 @@
+{
+  "enabled": true,
+  "name": "Auto Error Fix",
+  "description": "Automatically detects and fixes errors in code files when they are modified",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "mindstamps/src/**/*.js",
+      "mindstamps/src/**/*.ts",
+      "mindstamps/src/**/*.jsx",
+      "mindstamps/src/**/*.tsx",
+      "mindstamps/src/**/*.vue",
+      "mindstamps/*.js",
+      "mindstamps/*.ts",
+      "mindstamps/eslint.config.js",
+      "mindstamps/vite.config.js",
+      "mindstamps/tailwind.config.js",
+      "mindstamps/postcss.config.js"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Analyze the modified code files for any syntax errors, runtime errors, type errors, or other issues. If you find any errors, fix them immediately by updating the files with corrected code. Focus on: 1) Syntax errors 2) Type errors 3) Import/export issues 4) Runtime errors 5) Linting violations. Make the necessary corrections and ensure the code follows best practices."
+  }
+}

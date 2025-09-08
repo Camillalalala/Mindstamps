@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "name": "Code Flaw Review",
+  "description": "Reviews code changes and identifies potential implementation flaws in a concise bullet point format",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "mindstamps/src/**/*",
+      "mindstamps/*.js",
+      "mindstamps/*.html",
+      "mindstamps/*.json"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review the recent code changes and provide a concise bullet point list of potential flaws or issues with the implementation. Focus on practical problems like UI conflicts, performance issues, accessibility concerns, maintainability problems, or logical errors. Keep each point short and actionable. Example format: • Buttons may overlap other UI elements causing visual clutter • Missing error handling for edge cases • Function lacks proper validation"
+  }
+}
