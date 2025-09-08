@@ -18,6 +18,7 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [currentVoiceField, setCurrentVoiceField] = useState('title');
+  const [isTogglingVoice, setIsTogglingVoice] = useState(false);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -129,7 +130,16 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
   };
 
   const toggleVoiceMode = () => {
+    // Prevent rapid toggling
+    if (isTogglingVoice) {
+      console.log('Voice toggle already in progress, ignoring');
+      return;
+    }
+    
+    setIsTogglingVoice(true);
     const newVoiceMode = !isVoiceMode;
+    
+    console.log('Toggling voice mode from', isVoiceMode, 'to', newVoiceMode);
     setIsVoiceMode(newVoiceMode);
     
     if (newVoiceMode) {
@@ -149,6 +159,11 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
     } else {
       console.log('Voice mode disabled');
     }
+    
+    // Reset toggle lock after a delay
+    setTimeout(() => {
+      setIsTogglingVoice(false);
+    }, 1000);
   };
 
   const handleSubmit = async (e) => {
@@ -387,7 +402,6 @@ const CreateMemory = ({ onBack = null, onSuccess = null }) => {
                   borderColor: currentVoiceField === 'story' ? 'var(--dusty-rose)' : 'var(--warm-brown)'
                 }}>
                   <VoiceRecorder 
-                    key={`voice-${isVoiceMode}-${currentVoiceField}`}
                     onTranscription={handleVoiceTranscription}
                     onError={handleVoiceError}
                     onFieldChange={handleVoiceFieldChange}

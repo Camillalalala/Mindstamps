@@ -6,22 +6,24 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
   const [transcript, setTranscript] = useState('');
   const [activeField, setActiveField] = useState(currentField);
   const [isProcessingCommand, setIsProcessingCommand] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
   const recognitionRef = useRef(null);
+  const toggleTimeoutRef = useRef(null);
 
   useEffect(() => {
     // Check if speech recognition is supported
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
+
     if (SpeechRecognition) {
       setIsSupported(true);
       recognitionRef.current = new SpeechRecognition();
-      
+
       // Configure speech recognition
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
       recognitionRef.current.maxAlternatives = 1;
-      
+
       // Add start event handler
       recognitionRef.current.onstart = () => {
         console.log('Speech recognition started');
@@ -44,7 +46,7 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
 
         const fullTranscript = finalTranscript + interimTranscript;
         setTranscript(fullTranscript);
-        
+
         // Check for voice commands
         const lowerTranscript = fullTranscript.toLowerCase();
         if (event.results[event.results.length - 1].isFinal) {
@@ -56,7 +58,7 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
             setTranscript('');
             return;
           }
-          
+
           // Submit command
           if (lowerTranscript.includes('submit') || lowerTranscript.includes('save memory') || lowerTranscript.includes('create memory')) {
             console.log('Processing "submit" command');
@@ -66,7 +68,7 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
             setTranscript('');
             return;
           }
-          
+
           // Address/location commands
           if (lowerTranscript.includes('address is') || lowerTranscript.includes('location is') || lowerTranscript.includes('at')) {
             console.log('Processing location command');
@@ -74,7 +76,7 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
             return;
           }
         }
-        
+
         if (onTranscription) {
           onTranscription(fullTranscript, event.results[event.results.length - 1].isFinal, activeField);
         }
@@ -83,13 +85,13 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
       // Handle errors
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
-        
+
         // Don't treat "aborted" as a real error if we're just switching fields
         if (event.error === 'aborted') {
           console.log('Recognition aborted (likely due to field change), ignoring error');
           return;
         }
-        
+
         // Only stop recording for real errors
         if (event.error !== 'no-speech' && event.error !== 'audio-capture') {
           setIsRecording(false);
@@ -152,6 +154,9 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
+      if (toggleTimeoutRef.current) {
+        clearTimeout(toggleTimeoutRef.current);
+      }
     };
   }, [onTranscription, onError]);
 
@@ -175,17 +180,17 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
     const currentIndex = fieldOrder.indexOf(activeField);
     const nextIndex = (currentIndex + 1) % fieldOrder.length;
     const nextField = fieldOrder[nextIndex];
-    
+
     console.log('Navigating from', activeField, 'to', nextField);
-    
+
     // Don't stop recognition, just update the field
     setActiveField(nextField);
     setTranscript('');
-    
+
     if (onFieldChange) {
       onFieldChange(nextField);
     }
-    
+
     // No need to restart recognition - keep it running continuously
   };
 
@@ -193,7 +198,7 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
     // Extract location from transcript
     const lowerTranscript = transcript.toLowerCase();
     let location = '';
-    
+
     if (lowerTranscript.includes('address is')) {
       location = transcript.substring(transcript.toLowerCase().indexOf('address is') + 10).trim();
     } else if (lowerTranscript.includes('location is')) {
@@ -201,11 +206,11 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
     } else if (lowerTranscript.includes('at ')) {
       location = transcript.substring(transcript.toLowerCase().indexOf('at ') + 3).trim();
     }
-    
+
     if (location && onTranscription) {
       onTranscription(location, true, 'location');
     }
-    
+
     setTranscript('');
     // Keep recording active after location command
   };
@@ -224,10 +229,10 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
       console.log('Requesting microphone permission...');
       await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log('Microphone permission granted');
-      
+
       setTranscript('');
       setIsRecording(true);
-      
+
       // Start recognition without stopping first (to avoid abort errors)
       try {
         recognitionRef.current.start();
@@ -244,7 +249,7 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
           }
         }
       }
-      
+
     } catch (error) {
       console.error('Microphone permission denied:', error);
       setIsRecording(false);
@@ -262,11 +267,31 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
   };
 
   const toggleRecording = () => {
+    // Prevent rapid toggling
+    if (isToggling) {
+      console.log('Toggle already in progress, ignoring');
+      return;
+    }
+
+    setIsToggling(true);
+
+    // Clear any existing timeout
+    if (toggleTimeoutRef.current) {
+      clearTimeout(toggleTimeoutRef.current);
+    }
+
     if (isRecording) {
+      console.log('Stopping recording...');
       stopRecording();
     } else {
+      console.log('Starting recording...');
       startRecording();
     }
+
+    // Reset toggle lock after delay
+    toggleTimeoutRef.current = setTimeout(() => {
+      setIsToggling(false);
+    }, 1000);
   };
 
   if (!isSupported) {
@@ -293,14 +318,13 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
       <div className="flex items-center space-x-3">
         <button
           onClick={toggleRecording}
-          className={`voice-button flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
-            isRecording 
-              ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
+          className={`voice-button flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${isRecording
+              ? 'bg-red-500 hover:bg-red-600 animate-pulse'
               : 'btn-warm hover:scale-105'
-          }`}
+            }`}
           style={{
-            boxShadow: isRecording 
-              ? '0 0 20px rgba(239, 68, 68, 0.4)' 
+            boxShadow: isRecording
+              ? '0 0 20px rgba(239, 68, 68, 0.4)'
               : '0 4px 12px rgba(212, 165, 116, 0.3)'
           }}
         >
@@ -314,11 +338,11 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
             </svg>
           )}
         </button>
-        
+
         <div className="flex-1">
           <p className="text-sm font-medium" style={{ color: 'var(--deep-brown)' }}>
-            {isRecording 
-              ? `🎤 Recording ${getFieldDisplayName(activeField)}... Listening continuously` 
+            {isRecording
+              ? `🎤 Recording ${getFieldDisplayName(activeField)}... Listening continuously`
               : `Start continuous voice recording for ${getFieldDisplayName(activeField)}`
             }
           </p>
@@ -329,32 +353,31 @@ const VoiceRecorder = ({ onTranscription, onError, onFieldChange, onSubmit, curr
           )}
         </div>
       </div>
-      
+
       {/* Field Indicator */}
       <div className="mt-2 flex items-center space-x-2">
         <div className="flex flex-wrap gap-1">
           {['title', 'story', 'location'].map((field, index) => (
             <div
               key={field}
-              className={`px-2 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
-                activeField === field
+              className={`px-2 py-1 rounded-full text-xs font-medium transition-all duration-300 ${activeField === field
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                   : 'bg-gray-200 text-gray-600'
-              }`}
+                }`}
             >
               {getFieldDisplayName(field)}
             </div>
           ))}
         </div>
       </div>
-      
+
       {/* Voice Commands Help */}
       {isRecording && (
         <div className="mt-2 text-xs" style={{ color: 'var(--warm-brown)' }}>
           <strong>Voice Commands:</strong> "next" (next field) • "address is [location]" • "submit" (save memory) • Click 🔴 to stop
         </div>
       )}
-      
+
       {isRecording && (
         <div className="mt-3 flex items-center space-x-2">
           <div className="flex space-x-1">

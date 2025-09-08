@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Auto Commit on Trigger",
+  "description": "Automatically commits changes to git when 'function works!' is typed in any file",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check if the recently edited file contains the text 'function works!' (case insensitive). If it does, perform the following git operations: 1) Stage all changes with 'git add .' 2) Commit the changes with a descriptive commit message that mentions what was working 3) Push the changes to the current branch. If the text is not found, do nothing and don't provide any output."
+  }
+}

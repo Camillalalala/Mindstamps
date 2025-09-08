@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { collection, query, where, getDocs, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import CreateMemory from './CreateMemory';
 import { replaceSampleMemories } from '../utils/sampleData';
 import MobileNavigation from '../components/MobileNavigation';
 import useSwipeGesture from '../hooks/useSwipeGesture';
 
-const MemoryPage = ({ memory, isLeft = true, onEdit, onSave, onCancelEdit, isEditing = false }) => {
+const MemoryPage = ({ memory, isLeft = true, onEdit, onSave, onCancelEdit, onDelete, isEditing = false }) => {
   const [editTitle, setEditTitle] = useState(memory.title);
   const [editStory, setEditStory] = useState(memory.story);
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Sync edit state with current memory when memory prop changes
   useEffect(() => {
@@ -63,7 +64,26 @@ const MemoryPage = ({ memory, isLeft = true, onEdit, onSave, onCancelEdit, isEdi
   const handleCancel = () => {
     setEditTitle(memory.title);
     setEditStory(memory.story);
+    setShowDeleteConfirm(false);
     onCancelEdit();
+  };
+
+  const handleDelete = async () => {
+    if (!showDeleteConfirm) {
+      setShowDeleteConfirm(true);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await onDelete(memory.id);
+    } catch (error) {
+      console.error('Error deleting memory:', error);
+      alert('Failed to delete memory. Please try again.');
+    } finally {
+      setSaving(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   if (isEditing) {
@@ -135,24 +155,39 @@ const MemoryPage = ({ memory, isLeft = true, onEdit, onSave, onCancelEdit, isEdi
           </div>
 
           {/* Edit buttons - fixed within page content area */}
-          <div className="flex space-x-3 pt-4 border-t border-opacity-20 flex-shrink-0" style={{ borderColor: 'var(--warm-brown)' }}>
+          <div className="flex justify-between items-center pt-4 border-t border-opacity-20 flex-shrink-0" style={{ borderColor: 'var(--warm-brown)' }}>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="btn-warm px-4 py-2 rounded-full font-medium text-sm disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save changes'}
+              </button>
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 rounded-full font-medium text-sm transition-all duration-300"
+                style={{ 
+                  background: 'var(--paper-white)',
+                  color: 'var(--warm-brown)',
+                  border: '2px solid var(--soft-beige)'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+            
+            {/* Delete button */}
             <button
-              onClick={handleSave}
+              onClick={handleDelete}
               disabled={saving}
-              className="btn-warm px-4 py-2 rounded-full font-medium text-sm disabled:opacity-50"
+              className={`px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 disabled:opacity-50 ${
+                showDeleteConfirm 
+                  ? 'bg-red-500 text-white hover:bg-red-600' 
+                  : 'text-red-500 hover:bg-red-50 border border-red-200'
+              }`}
             >
-              {saving ? 'Saving...' : 'Save changes'}
-            </button>
-            <button
-              onClick={handleCancel}
-              className="px-4 py-2 rounded-full font-medium text-sm transition-all duration-300"
-              style={{ 
-                background: 'var(--paper-white)',
-                color: 'var(--warm-brown)',
-                border: '2px solid var(--soft-beige)'
-              }}
-            >
-              Cancel
+              {showDeleteConfirm ? 'Click again to delete' : '🗑️ Delete'}
             </button>
           </div>
         </div>
@@ -501,6 +536,44 @@ const Journal = () => {
     }
   };
 
+  const handleDeleteMemory = async (memoryId) => {
+    console.log('handleDeleteMemory: Deleting memory ID:', memoryId);
+    
+    // Validation to ensure we're deleting the correct memory
+    if (editingMemoryId !== memoryId) {
+      console.error('handleDeleteMemory: Mismatch between editingMemoryId and memoryId being deleted', {
+        editingMemoryId,
+        memoryId
+      });
+      throw new Error('Memory ID mismatch during delete operation');
+    }
+    
+    try {
+      const memoryRef = doc(db, 'memories', memoryId);
+      await deleteDoc(memoryRef);
+      
+      // Update local state - remove the deleted memory
+      setMemories(prevMemories => 
+        prevMemories.filter(memory => memory.id !== memoryId)
+      );
+      
+      console.log('handleDeleteMemory: Successfully deleted memory ID:', memoryId, 'Clearing edit state');
+      
+      // Clear edit state after successful deletion
+      setEditingMemoryId(null);
+      
+      // Adjust current page if necessary (if we deleted the last memory on the last page)
+      const newMemoriesCount = memories.length - 1;
+      const newTotalPages = Math.ceil(newMemoriesCount / 2);
+      if (currentPage >= newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages - 1);
+      }
+    } catch (error) {
+      console.error('Error deleting memory:', error);
+      throw error;
+    }
+  };
+
   const handleLoadSampleData = async () => {
     if (!user) return;
     
@@ -672,6 +745,7 @@ const Journal = () => {
               onEdit={handleEditMemory}
               onSave={handleSaveMemory}
               onCancelEdit={handleCancelEdit}
+              onDelete={handleDeleteMemory}
               isEditing={(() => {
                 const isEditing = editingMemoryId === leftMemory.id;
                 if (editingMemoryId) {
@@ -703,6 +777,7 @@ const Journal = () => {
               onEdit={handleEditMemory}
               onSave={handleSaveMemory}
               onCancelEdit={handleCancelEdit}
+              onDelete={handleDeleteMemory}
               isEditing={(() => {
                 const isEditing = editingMemoryId === rightMemory.id;
                 if (editingMemoryId) {
